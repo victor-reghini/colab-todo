@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --primary-color: #5c6bc0;
+            --accent-color: #8e99f3;
+            --danger-color: #e57373;
+            --danger-hover: #ef5350;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .badge-mode {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Controles Globais e Filtros */
+        .controls-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Formulário de Criação Global */
+        .form-group {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        @media (min-width: 576px) {
+            .form-row {
+                flex-direction: row;
+            }
+            .form-row input[type="text"]:first-child {
+                flex: 2;
+            }
+            .form-row input[type="text"]:nth-child(2) {
+                flex: 1;
+            }
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            width: 100%;
+        }
+
+        @media (min-width: 576px) {
+            input, select, button {
+                width: auto;
+            }
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        /* Estrutura de Grupos */
+        .group-container {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .group-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .btn-delete-small {
+            background: transparent;
+            color: var(--danger-color);
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid var(--danger-color);
+            width: auto;
+        }
+
+        .btn-delete-small:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Formulário de atividade rápido dentro do grupo */
+        .group-quick-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .group-quick-form input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+        .group-quick-form button {
+            padding: 6px 12px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        /* Lista de Tarefas */
+        .todo-list {
+            list-style: none;
+        }
+
+        .todo-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .todo-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .todo-text {
+            font-size: 15px;
+            word-break: break-word;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+            opacity: 0.7;
+        }
+
+        /* Subatividades */
+        .subtasks-container {
+            margin-left: 20px;
+            padding-left: 12px;
+            border-left: 2px dashed #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        @media (min-width: 576px) {
+            .subtasks-container {
+                margin-left: 30px;
+            }
+        }
+
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 2px 0;
+        }
+
+        .subtask-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .subtask-left span {
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .subtask-form {
+            display: flex;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .subtask-form input {
+            padding: 5px 8px;
+            font-size: 13px;
+            flex: 1;
+        }
+        
+        .subtask-form button {
+            padding: 5px 10px;
+            font-size: 13px;
+            width: auto;
+        }
+
+        /* Classes de visibilidade condicional baseadas no modo */
+        .admin-only {
+            display: none !important;
+        }
+
+        body.mode-admin .admin-only {
+            display: flex !important;
+        }
+        body.mode-admin button.admin-only {
+            display: inline-block !important;
+        }
+
+        /* Esconder elementos concluídos quando filtro estiver ativo */
+        .hide-completed .todo-item.is-completed,
+        .hide-completed .subtask-item.is-completed {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 Todo List</h1>
+    <div id="view-mode-badge" class="badge-mode"></div>
+
+    <div class="controls-card">
+        <label class="filter-group">
+            <input type="checkbox" id="hide-completed-checkbox" onchange="toggleHideCompletedFilter()" style="width: auto;">
+            <span>Ocultar atividades/subatividades concluídas</span>
+        </label>
+    </div>
+
+    <div class="form-group admin-only" id="global-form-box">
+        <div class="form-row">
+            <input type="text" id="todo-input" placeholder="Nova atividade...">
+            <input type="text" id="group-input" placeholder="Grupo (Ex: Trabalho, Casa...)">
+            <button onclick="createTodoGlobal()">Adicionar</button>
+        </div>
+    </div>
+
+    <div id="todo-groups"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfCBhNQVNKGQ9ByDI2DmvmKhtbCNJDCXk",
+        authDomain: "colab-todo-e7e77.firebaseapp.com",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: ""
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const todosRef = ref(db, 'todos');
+
+    // Validação de modo de acesso via parâmetro da URL (?mode=admin)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('mode') === 'admin';
+
+    // Configura o visual inicial baseado nas permissões
+    if (isAdmin) {
+        document.body.classList.add('mode-admin');
+        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Liberada)</span>`;
+    } else {
+        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #e57373;">👁️ Modo Leitor (Apenas Conclusão de Atividades)</span>`;
+    }
+
+    let hideCompleted = false;
+
+    window.toggleHideCompletedFilter = function() {
+        hideCompleted = document.getElementById('hide-completed-checkbox').checked;
+        const container = document.getElementById('todo-groups');
+        if (hideCompleted) {
+            container.classList.add('hide-completed');
+        } else {
+            container.classList.remove('hide-completed');
+        }
+    }
+
+    window.createTodoGlobal = function() {
+        if (!isAdmin) return;
+        const textInput = document.getElementById('todo-input');
+        const groupInput = document.getElementById('group-input');
+        const text = textInput.value.trim();
+        const group = groupInput.value.trim() || "Geral";
+
+        if (!text) return alert("Digite o nome da atividade!");
+
+        saveTodo(text, group);
+        textInput.value = '';
+    }
+
+    function saveTodo(text, groupName) {
+        const newTodoRef = push(todosRef);
+        set(newTodoRef, {
+            text: text,
+            group: groupName,
+            completed: false,
+            subtasks: {}
+        });
+    }
+
+    window.createTodoInGroup = function(groupName) {
+        if (!isAdmin) return;
+        const input = document.getElementById(`group-todo-input-${cssSafeName(groupName)}`);
+        const text = input.value.trim();
+
+        if (!text) return alert("Digite o nome da atividade!");
+
+        saveTodo(text, groupName);
+        input.value = '';
+    }
+
+    window.toggleTodo = function(id, currentStatus) {
+        update(ref(db, `todos/${id}`), {
+            completed: !currentStatus
+        });
+    }
+
+    window.deleteTodo = function(id) {
+        if (!isAdmin) return;
+        if (confirm("Tem certeza que deseja remover esta atividade e todas as suas subatividades?")) {
+            remove(ref(db, `todos/${id}`));
+        }
+    }
+
+    window.deleteGroup = function(groupName, todoIdsArray) {
+        if (!isAdmin) return;
+        if (confirm(`Tem certeza que deseja deletar o grupo "${groupName}" e todas as suas ${todoIdsArray.length} atividades?`)) {
+            todoIdsArray.forEach(id => {
+                remove(ref(db, `todos/${id}`));
+            });
+        }
+    }
+
+    window.addSubtask = function(todoId) {
+        if (!isAdmin) return;
+        const input = document.getElementById(`sub-input-${todoId}`);
+        const text = input.value.trim();
+
+        if (!text) return alert("Digite o nome da subatividade!");
+
+        const subtasksRef = ref(db, `todos/${todoId}/subtasks`);
+        const newSubtaskRef = push(subtasksRef);
+        
+        set(newSubtaskRef, {
+            text: text,
+            completed: false
+        });
+
+        input.value = '';
+    }
+
+    window.toggleSubtask = function(todoId, subtaskId, currentStatus) {
+        update(ref(db, `todos/${id}/subtasks/${subtaskId}`), { // Correção aqui de contexto de id se necessário, mapeado dinamicamente abaixo
+            completed: !currentStatus
+        });
+    }
+
+    // Vinculação global das ações de toggle no escopo global
+    window.toggleSubtaskContext = function(todoId, subtaskId, currentStatus) {
+        update(ref(db, `todos/${todoId}/subtasks/${subtaskId}`), {
+            completed: !currentStatus
+        });
+    }
+
+    window.deleteSubtask = function(todoId, subtaskId) {
+        if (!isAdmin) return;
+        if (confirm("Deseja remover esta subatividade?")) {
+            remove(ref(db, `todos/${todoId}/subtasks/${subtaskId}`));
+        }
+    }
+
+    function cssSafeName(name) {
+        return btoa(unescape(encodeURIComponent(name))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    }
+
+    onValue(todosRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        renderTodoList(data);
+    });
+
+    function renderTodoList(todos) {
+        const groupsContainer = document.getElementById('todo-groups');
+        groupsContainer.innerHTML = '';
+
+        if (hideCompleted) {
+            groupsContainer.classList.add('hide-completed');
+        }
+
+        const groupedTodos = {};
+        for (let id in todos) {
+            const todo = todos[id];
+            if (!groupedTodos[todo.group]) {
+                groupedTodos[todo.group] = [];
+            }
+            groupedTodos[todo.group].push({ id, ...todo });
+        }
+
+        for (let groupName in groupedTodos) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group-container';
+            
+            const todoIdsInGroup = groupedTodos[groupName].map(t => t.id);
+            const todoIdsJson = JSON.stringify(todoIdsInGroup).replace(/"/g, "'");
+            const safeGroupName = cssSafeName(groupName);
+            
+            let groupHeaderHtml = `
+                <div class="group-header">
+                    <div class="group-title">${groupName}</div>
+                    <button class="btn-delete-small admin-only" onclick="deleteGroup('${groupName.replace(/'/g, "\\'")}', ${todoIdsJson})">Excluir Grupo</button>
+                </div>
+                <div class="group-quick-form admin-only">
+                    <input type="text" id="group-todo-input-${safeGroupName}" placeholder="Adicionar atividade em ${groupName}...">
+                    <button onclick="createTodoInGroup('${groupName.replace(/'/g, "\\'")}')">Adicionar</button>
+                </div>
+            `;
+            
+            groupDiv.innerHTML = groupHeaderHtml;
+            const ul = document.createElement('ul');
+            ul.className = 'todo-list';
+
+            groupedTodos[groupName].forEach(todo => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${todo.completed ? 'is-completed' : ''}`;
+
+                let mainTodoHtml = `
+                    <div class="todo-main">
+                        <div class="todo-left">
+                            <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo('${todo.id}', ${todo.completed})" style="width: auto;">
+                            <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
+                        </div>
+                        <button class="btn-delete-small admin-only" onclick="deleteTodo('${todo.id}')" style="margin-left: 10px;">✕</button>
+                    </div>
+                `;
+
+                let subtasksHtml = `<div class="subtasks-container">`;
+                if (todo.subtasks) {
+                    for (let subId in todo.subtasks) {
+                        const subtask = todo.subtasks[subId];
+                        subtasksHtml += `
+                            <div class="subtask-item ${subtask.completed ? 'is-completed' : ''}">
+                                <div class="subtask-left">
+                                    <input type="checkbox" ${subtask.completed ? 'checked' : ''} onchange="toggleSubtaskContext('${todo.id}', '${subId}', ${subtask.completed})" style="width: auto;">
+                                    <span class="${subtask.completed ? 'completed' : ''}">${subtask.text}</span>
+                                </div>
+                                <button class="btn-delete-small admin-only" onclick="deleteSubtask('${todo.id}', '${subId}')" style="padding: 1px 5px; font-size: 10px;">✕</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                subtasksHtml += `
+                    <div class="subtask-form admin-only">
+                        <input type="text" id="sub-input-${todo.id}" placeholder="Nova subatividade...">
+                        <button onclick="addSubtask('${todo.id}')">+</button>
+                    </div>
+                </div>`;
+
+                li.innerHTML = mainTodoHtml + subtasksHtml;
+                ul.appendChild(li);
+            });
+
+            groupDiv.appendChild(ul);
+            groupsContainer.appendChild(groupDiv);
+        }
+    }
+</script>
+</body>
+</html>

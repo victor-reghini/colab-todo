@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List Colaborativo</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --primary-color: #5c6bc0;
+            --accent-color: #8e99f3;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        .group-container {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .group-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 5px;
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .todo-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .todo-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .todo-text {
+            flex: 1;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .subtasks-container {
+            margin-left: 30px;
+            padding-left: 10px;
+            border-left: 2px dashed #ddd;
+            margin-top: 5px;
+        }
+
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 3px 0;
+        }
+
+        .subtask-form {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .subtask-form input {
+            padding: 5px;
+            font-size: 14px;
+        }
+        
+        .subtask-form button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 Nosso Todo List</h1>
+
+    <div class="form-group">
+        <div class="form-row">
+            <input type="text" id="todo-input" placeholder="Nova atividade...">
+            <input type="text" id="group-input" placeholder="Grupo (Ex: Trabalho, Casa...)">
+            <button onclick="createTodo()">Adicionar</button>
+        </div>
+    </div>
+
+    <div id="todo-groups"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfCBhNQVNKGQ9ByDI2DmvmKhtbCNJDCXk",
+        authDomain: "colab-todo-e7e77.firebaseapp.com",
+        projectId: "colab-todo-e7e77",
+        storageBucket: "colab-todo-e7e77.firebasestorage.app",
+        messagingSenderId: "822271918117",
+        appId: "1:822271918117:web:e0550c2a44618bd05ebfcc"
+    };
+
+    // Inicializa o Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const todosRef = ref(db, 'todos');
+
+    // Função para Criar Nova Tarefa Principal
+    window.createTodo = function() {
+        const textInput = document.getElementById('todo-input');
+        const groupInput = document.getElementById('group-input');
+        
+        const text = textInput.value.trim();
+        const group = groupInput.value.trim() || "Geral";
+
+        if (!text) return alert("Digite o nome da atividade!");
+
+        const newTodoRef = push(todosRef);
+        set(newTodoRef, {
+            text: text,
+            group: group,
+            completed: false,
+            subtasks: {}
+        });
+
+        textInput.value = '';
+    }
+
+    // Função para Alterar Status da Tarefa Principal
+    window.toggleTodo = function(id, currentStatus) {
+        update(ref(db, `todos/${id}`), {
+            completed: !currentStatus
+        });
+    }
+
+    // Função para Adicionar Subatividade
+    window.addSubtask = function(todoId) {
+        const input = document.getElementById(`sub-input-${todoId}`);
+        const text = input.value.trim();
+
+        if (!text) return alert("Digite o nome da subatividade!");
+
+        const subtasksRef = ref(db, `todos/${todoId}/subtasks`);
+        const newSubtaskRef = push(subtasksRef);
+        
+        set(newSubtaskRef, {
+            text: text,
+            completed: false
+        });
+
+        input.value = '';
+    }
+
+    // Função para Alterar Status da Subatividade
+    window.toggleSubtask = function(todoId, subtaskId, currentStatus) {
+        update(ref(db, `todos/${todoId}/subtasks/${subtaskId}`), {
+            completed: !currentStatus
+        });
+    }
+
+    // Escuta mudanças no banco de dados em tempo real e atualiza a tela automaticamente
+    onValue(todosRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        renderTodoList(data);
+    });
+
+    // Função de Renderização da UI
+    function renderTodoList(todos) {
+        const groupsContainer = document.getElementById('todo-groups');
+        groupsContainer.innerHTML = '';
+
+        // Agrupar itens por categoria
+        const groupedTodos = {};
+        for (let id in todos) {
+            const todo = todos[id];
+            if (!groupedTodos[todo.group]) {
+                groupedTodos[todo.group] = [];
+            }
+            groupedTodos[todo.group].push({ id, ...todo });
+        }
+
+        // Renderizar cada grupo e seus itens
+        for (let groupName in groupedTodos) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group-container';
+            
+            groupDiv.innerHTML = `<div class="group-title">${groupName}</div>`;
+            
+            const ul = document.createElement('ul');
+            ul.className = 'todo-list';
+
+            groupedTodos[groupName].forEach(todo => {
+                const li = document.createElement('li');
+                li.className = 'todo-item';
+
+                // Renderiza a atividade principal
+                let mainTodoHtml = `
+                    <div class="todo-main">
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo('${todo.id}', ${todo.completed})">
+                        <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
+                    </div>
+                `;
+
+                // Renderiza as subatividades se existirem
+                let subtasksHtml = `<div class="subtasks-container">`;
+                if (todo.subtasks) {
+                    for (let subId in todo.subtasks) {
+                        const subtask = todo.subtasks[subId];
+                        subtasksHtml += `
+                            <div class="subtask-item">
+                                <input type="checkbox" ${subtask.completed ? 'checked' : ''} onchange="toggleSubtask('${todo.id}', '${subId}', ${subtask.completed})">
+                                <span class="${subtask.completed ? 'completed' : ''}">${subtask.text}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Formulário inline para adicionar novas subatividades
+                subtasksHtml += `
+                    <div class="subtask-form">
+                        <input type="text" id="sub-input-${todo.id}" placeholder="Nova subatividade...">
+                        <button onclick="addSubtask('${todo.id}')">+</button>
+                    </div>
+                </div>`;
+
+                li.innerHTML = mainTodoHtml + subtasksHtml;
+                ul.appendChild(li);
+            });
+
+            groupDiv.appendChild(ul);
+            groupsContainer.appendChild(groupDiv);
+        }
+    }
+</script>
+</body>
+</html>

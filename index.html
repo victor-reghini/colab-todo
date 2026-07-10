@@ -344,7 +344,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('mode') === 'admin';
 
-    // Configura o visual inicial baseado nas permissões
     if (isAdmin) {
         document.body.classList.add('mode-admin');
         document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Habilitada)</span>`;

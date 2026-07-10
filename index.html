@@ -330,10 +330,10 @@
     const firebaseConfig = {
         apiKey: "AIzaSyBfCBhNQVNKGQ9ByDI2DmvmKhtbCNJDCXk",
         authDomain: "colab-todo-e7e77.firebaseapp.com",
-        projectId: "",
-        storageBucket: "",
-        messagingSenderId: "",
-        appId: ""
+        projectId: "colab-todo-e7e77",
+        storageBucket: "colab-todo-e7e77.firebasestorage.app",
+        messagingSenderId: "822271918117",
+        appId: "1:822271918117:web:e0550c2a44618bd05ebfcc"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -344,7 +344,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('mode') === 'admin';
 
-    // Configura o visual inicial baseado nas permissões
     if (isAdmin) {
         document.body.classList.add('mode-admin');
         document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Habilitada)</span>`;

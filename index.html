@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List Colaborativo Responsivo</title>
+    <title>Todo List</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -42,6 +42,13 @@
             font-size: 1.8rem;
         }
 
+        .badge-mode {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
         /* Controles Globais e Filtros */
         .controls-card {
             background: var(--card-bg);
@@ -64,7 +71,7 @@
             cursor: pointer;
         }
 
-        /* Formulário de Criação Global (Responsivo) */
+        /* Formulário de Criação Global */
         .form-group {
             background: var(--card-bg);
             padding: 15px;
@@ -273,6 +280,18 @@
             width: auto;
         }
 
+        /* Classes de visibilidade condicional baseadas no modo */
+        .admin-only {
+            display: none !important;
+        }
+
+        body.mode-admin .admin-only {
+            display: flex !important;
+        }
+        body.mode-admin button.admin-only {
+            display: inline-block !important;
+        }
+
         /* Esconder elementos concluídos quando filtro estiver ativo */
         .hide-completed .todo-item.is-completed,
         .hide-completed .subtask-item.is-completed {
@@ -283,7 +302,8 @@
 <body>
 
 <div class="container">
-    <h1>📝 Nosso Todo List</h1>
+    <h1>📝 Todo List</h1>
+    <div id="view-mode-badge" class="badge-mode"></div>
 
     <div class="controls-card">
         <label class="filter-group">
@@ -292,7 +312,7 @@
         </label>
     </div>
 
-    <div class="form-group">
+    <div class="form-group admin-only" id="global-form-box">
         <div class="form-row">
             <input type="text" id="todo-input" placeholder="Nova atividade...">
             <input type="text" id="group-input" placeholder="Grupo (Ex: Trabalho, Casa...)">
@@ -320,9 +340,20 @@
     const db = getDatabase(app);
     const todosRef = ref(db, 'todos');
 
+    // Validação de modo de acesso via parâmetro da URL (?mode=admin)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('mode') === 'admin';
+
+    // Configura o visual inicial baseado nas permissões
+    if (isAdmin) {
+        document.body.classList.add('mode-admin');
+        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Liberada)</span>`;
+    } else {
+        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #e57373;">👁️ Modo Leitor (Apenas Conclusão de Atividades)</span>`;
+    }
+
     let hideCompleted = false;
 
-    // Filtro para ocultar completados
     window.toggleHideCompletedFilter = function() {
         hideCompleted = document.getElementById('hide-completed-checkbox').checked;
         const container = document.getElementById('todo-groups');
@@ -333,11 +364,10 @@
         }
     }
 
-    // Função para Criar Nova Tarefa pelo Formulário Global
     window.createTodoGlobal = function() {
+        if (!isAdmin) return;
         const textInput = document.getElementById('todo-input');
         const groupInput = document.getElementById('group-input');
-        
         const text = textInput.value.trim();
         const group = groupInput.value.trim() || "Geral";
 
@@ -347,7 +377,6 @@
         textInput.value = '';
     }
 
-    // Função para salvar atividade no banco
     function saveTodo(text, groupName) {
         const newTodoRef = push(todosRef);
         set(newTodoRef, {
@@ -358,8 +387,8 @@
         });
     }
 
-    // Função para Criar Nova Tarefa Diretamente dentro de um Grupo existente
     window.createTodoInGroup = function(groupName) {
+        if (!isAdmin) return;
         const input = document.getElementById(`group-todo-input-${cssSafeName(groupName)}`);
         const text = input.value.trim();
 
@@ -369,22 +398,21 @@
         input.value = '';
     }
 
-    // Função para Alterar Status da Tarefa Principal
     window.toggleTodo = function(id, currentStatus) {
         update(ref(db, `todos/${id}`), {
             completed: !currentStatus
         });
     }
 
-    // Função para Deletar uma Atividade Principal por Completo
     window.deleteTodo = function(id) {
+        if (!isAdmin) return;
         if (confirm("Tem certeza que deseja remover esta atividade e todas as suas subatividades?")) {
             remove(ref(db, `todos/${id}`));
         }
     }
 
-    // Função para Deletar um Grupo Inteiro (e todas as suas atividades)
     window.deleteGroup = function(groupName, todoIdsArray) {
+        if (!isAdmin) return;
         if (confirm(`Tem certeza que deseja deletar o grupo "${groupName}" e todas as suas ${todoIdsArray.length} atividades?`)) {
             todoIdsArray.forEach(id => {
                 remove(ref(db, `todos/${id}`));
@@ -392,8 +420,8 @@
         }
     }
 
-    // Função para Adicionar Subatividade
     window.addSubtask = function(todoId) {
+        if (!isAdmin) return;
         const input = document.getElementById(`sub-input-${todoId}`);
         const text = input.value.trim();
 
@@ -410,32 +438,35 @@
         input.value = '';
     }
 
-    // Função para Alterar Status da Subatividade
     window.toggleSubtask = function(todoId, subtaskId, currentStatus) {
+        update(ref(db, `todos/${id}/subtasks/${subtaskId}`), { // Correção aqui de contexto de id se necessário, mapeado dinamicamente abaixo
+            completed: !currentStatus
+        });
+    }
+
+    // Vinculação global das ações de toggle no escopo global
+    window.toggleSubtaskContext = function(todoId, subtaskId, currentStatus) {
         update(ref(db, `todos/${todoId}/subtasks/${subtaskId}`), {
             completed: !currentStatus
         });
     }
 
-    // Função para Remover uma Subatividade Individualmente
     window.deleteSubtask = function(todoId, subtaskId) {
+        if (!isAdmin) return;
         if (confirm("Deseja remover esta subatividade?")) {
             remove(ref(db, `todos/${todoId}/subtasks/${subtaskId}`));
         }
     }
 
-    // Auxiliar para gerar IDs válidos no DOM sem quebrar com espaços e acentos
     function cssSafeName(name) {
         return btoa(unescape(encodeURIComponent(name))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
     }
 
-    // Escuta mudanças do Firebase
     onValue(todosRef, (snapshot) => {
         const data = snapshot.val() || {};
         renderTodoList(data);
     });
 
-    // Função de Renderização da UI
     function renderTodoList(todos) {
         const groupsContainer = document.getElementById('todo-groups');
         groupsContainer.innerHTML = '';
@@ -444,7 +475,6 @@
             groupsContainer.classList.add('hide-completed');
         }
 
-        // Agrupar itens por categoria
         const groupedTodos = {};
         for (let id in todos) {
             const todo = todos[id];
@@ -454,7 +484,6 @@
             groupedTodos[todo.group].push({ id, ...todo });
         }
 
-        // Renderizar cada grupo e seus itens
         for (let groupName in groupedTodos) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
@@ -466,9 +495,9 @@
             let groupHeaderHtml = `
                 <div class="group-header">
                     <div class="group-title">${groupName}</div>
-                    <button class="btn-delete-small" onclick="deleteGroup('${groupName.replace(/'/g, "\\'")}', ${todoIdsJson})">Excluir Grupo</button>
+                    <button class="btn-delete-small admin-only" onclick="deleteGroup('${groupName.replace(/'/g, "\\'")}', ${todoIdsJson})">Excluir Grupo</button>
                 </div>
-                <div class="group-quick-form">
+                <div class="group-quick-form admin-only">
                     <input type="text" id="group-todo-input-${safeGroupName}" placeholder="Adicionar atividade em ${groupName}...">
                     <button onclick="createTodoInGroup('${groupName.replace(/'/g, "\\'")}')">Adicionar</button>
                 </div>
@@ -488,7 +517,7 @@
                             <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo('${todo.id}', ${todo.completed})" style="width: auto;">
                             <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
                         </div>
-                        <button class="btn-delete-small" onclick="deleteTodo('${todo.id}')" style="margin-left: 10px;">✕</button>
+                        <button class="btn-delete-small admin-only" onclick="deleteTodo('${todo.id}')" style="margin-left: 10px;">✕</button>
                     </div>
                 `;
 
@@ -499,17 +528,17 @@
                         subtasksHtml += `
                             <div class="subtask-item ${subtask.completed ? 'is-completed' : ''}">
                                 <div class="subtask-left">
-                                    <input type="checkbox" ${subtask.completed ? 'checked' : ''} onchange="toggleSubtask('${todo.id}', '${subId}', ${subtask.completed})" style="width: auto;">
+                                    <input type="checkbox" ${subtask.completed ? 'checked' : ''} onchange="toggleSubtaskContext('${todo.id}', '${subId}', ${subtask.completed})" style="width: auto;">
                                     <span class="${subtask.completed ? 'completed' : ''}">${subtask.text}</span>
                                 </div>
-                                <button class="btn-delete-small" onclick="deleteSubtask('${todo.id}', '${subId}')" style="padding: 1px 5px; font-size: 10px;">✕</button>
+                                <button class="btn-delete-small admin-only" onclick="deleteSubtask('${todo.id}', '${subId}')" style="padding: 1px 5px; font-size: 10px;">✕</button>
                             </div>
                         `;
                     }
                 }
 
                 subtasksHtml += `
-                    <div class="subtask-form">
+                    <div class="subtask-form admin-only">
                         <input type="text" id="sub-input-${todo.id}" placeholder="Nova subatividade...">
                         <button onclick="addSubtask('${todo.id}')">+</button>
                     </div>

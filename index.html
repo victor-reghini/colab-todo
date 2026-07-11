@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List Colaborativo (WhatsApp Export)</title>
+    <title>Gerenciador de Listas</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -15,13 +15,10 @@
             --danger-hover: #ef5350;
             --whatsapp-color: #25d366;
             --whatsapp-hover: #20ba56;
+            --edit-color: #ffb74d;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -32,304 +29,134 @@
             justify-content: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
+        .container { width: 100%; max-width: 800px; }
+        h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; font-size: 1.8rem; }
+        .back-link { display: inline-block; margin-bottom: 15px; color: var(--primary-color); text-decoration: none; font-weight: bold; }
+        .badge-mode { text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 14px; }
 
-        h1 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-
-        .badge-mode {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        /* Controles Globais e Filtros */
-        .controls-card {
+        /* Painéis e Cards */
+        .card {
             background: var(--card-bg);
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             margin-bottom: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            justify-content: space-between;
         }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        /* Formulário de Criação Global */
-        .form-group {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        .controls-card { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
+        .form-row { display: flex; flex-direction: column; gap: 10px; }
 
         @media (min-width: 576px) {
-            .form-row {
-                flex-direction: row;
-            }
-            .form-row input[type="text"]:first-child {
-                flex: 2;
-            }
-            .form-row input[type="text"]:nth-child(2) {
-                flex: 1;
-            }
+            .form-row { flex-direction: row; }
+            .form-row input[type="text"]:first-child { flex: 2; }
+            .form-row input[type="text"]:nth-child(2) { flex: 1; }
         }
 
-        input, select, button {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 15px;
-            width: 100%;
-        }
-
-        @media (min-width: 576px) {
-            input, select, button {
-                width: auto;
-            }
-        }
+        input, button { padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; width: 100%; }
+        @media (min-width: 576px) { input, button { width: auto; } }
 
         button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-            white-space: nowrap;
+            background-color: var(--primary-color); color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; white-space: nowrap;
         }
-
-        button:hover {
-            background-color: var(--accent-color);
-        }
-
-        button.btn-whatsapp {
-            background-color: var(--whatsapp-color);
-        }
-
-        button.btn-whatsapp:hover {
-            background-color: var(--whatsapp-hover);
-        }
-
-        /* Estrutura de Grupos */
-        .group-container {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        .group-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--bg-color);
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .group-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .btn-delete-small {
-            background: transparent;
-            color: var(--danger-color);
-            padding: 4px 8px;
-            font-size: 12px;
-            border: 1px solid var(--danger-color);
-            width: auto;
-        }
-
-        .btn-delete-small:hover {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        /* Formulário rápido interno do grupo */
-        .group-quick-form {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .group-quick-form input {
-            flex: 1;
-            padding: 6px 10px;
-            font-size: 14px;
-        }
-        .group-quick-form button {
-            padding: 6px 12px;
-            font-size: 14px;
-            width: auto;
-        }
-
-        /* Lista de Tarefas */
-        .todo-list {
-            list-style: none;
-        }
-
-        .todo-item {
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .todo-item:last-child {
-            border-bottom: none;
-        }
-
-        .todo-main {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .todo-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .todo-text {
-            font-size: 15px;
-            word-break: break-word;
-        }
-
-        .completed {
-            text-decoration: line-through;
-            color: #888;
-            opacity: 0.7;
-        }
-
-        /* Subatividades */
-        .subtasks-container {
-            margin-left: 20px;
-            padding-left: 12px;
-            border-left: 2px dashed #ddd;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 4px;
-        }
-
-        @media (min-width: 576px) {
-            .subtasks-container {
-                margin-left: 30px;
-            }
-        }
-
-        .subtask-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 2px 0;
-        }
-
-        .subtask-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .subtask-left span {
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .subtask-form {
-            display: flex;
-            gap: 5px;
-            margin-top: 4px;
-        }
-
-        .subtask-form input {
-            padding: 5px 8px;
-            font-size: 13px;
-            flex: 1;
-        }
+        button:hover { background-color: var(--accent-color); }
+        button.btn-whatsapp { background-color: var(--whatsapp-color); }
+        button.btn-whatsapp:hover { background-color: var(--whatsapp-hover); }
+        button.btn-edit { background-color: var(--edit-color); }
         
-        .subtask-form button {
-            padding: 5px 10px;
-            font-size: 13px;
-            width: auto;
+        .btn-delete-small {
+            background: transparent; color: var(--danger-color); padding: 4px 8px; font-size: 12px; border: 1px solid var(--danger-color); width: auto;
         }
+        .btn-delete-small:hover { background: var(--danger-color); color: white; }
 
-        .admin-only {
-            display: none !important;
+        /* Visões de Listas (Dashboard) */
+        .lists-grid { display: flex; flex-direction: column; gap: 12px; }
+        .list-item-card {
+            background: var(--card-bg); padding: 15px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px;
         }
+        @media (min-width: 576px) {
+            .list-item-card { flex-direction: row; align-items: center; justify-content: space-between; }
+        }
+        .list-info { font-size: 1.1rem; font-weight: bold; color: #444; }
+        .list-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        body.mode-admin .admin-only {
-            display: flex !important;
-        }
-        body.mode-admin button.admin-only {
-            display: inline-block !important;
-        }
+        /* Estrutura de Todo/Grupos */
+        .group-container { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .group-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--bg-color); padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .group-title { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+        .group-quick-form { display: flex; gap: 8px; margin-bottom: 15px; }
+        .group-quick-form input { flex: 1; padding: 6px 10px; font-size: 14px; }
+        .group-quick-form button { padding: 6px 12px; font-size: 14px; width: auto; }
+
+        .todo-list { list-style: none; }
+        .todo-item { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; }
+        .todo-item:last-child { border-bottom: none; }
+        .todo-main { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .todo-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .todo-text { font-size: 15px; word-break: break-word; }
+        .completed { text-decoration: line-through; color: #888; opacity: 0.7; }
+
+        .subtasks-container { margin-left: 20px; padding-left: 12px; border-left: 2px dashed #ddd; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+        .subtask-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 0; }
+        .subtask-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .subtask-left span { font-size: 14px; word-break: break-word; }
+        .subtask-form { display: flex; gap: 5px; margin-top: 4px; }
+        .subtask-form input { padding: 5px 8px; font-size: 13px; flex: 1; }
+        .subtask-form button { padding: 5px 10px; font-size: 13px; width: auto; }
+
+        /* Controle de visibilidade */
+        .admin-only, .view-dashboard, .view-todos { display: none !important; }
+        body.mode-admin .admin-only { display: flex !important; }
+        body.mode-admin button.admin-only { display: inline-block !important; }
+        
+        body.screen-dashboard .view-dashboard { display: block !important; }
+        body.screen-dashboard div.view-dashboard { display: flex !important; }
+        body.screen-todos .view-todos { display: block !important; }
 
         .hide-completed .todo-item.is-completed,
-        .hide-completed .subtask-item.is-completed {
-            display: none !important;
-        }
+        .hide-completed .subtask-item.is-completed { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>📝 Todo List</h1>
+    <div class="view-todos">
+        <a href="#" class="back-link" onclick="goBackToDashboard(event)">⬅️ Voltar para o Gerenciador de Listas</a>
+    </div>
+    
+    <h1 id="app-title">📝 Carregando...</h1>
     <div id="view-mode-badge" class="badge-mode"></div>
 
-    <div class="controls-card">
-        <label class="filter-group">
-            <input type="checkbox" id="hide-completed-checkbox" onchange="toggleHideCompletedFilter()" style="width: auto;">
-            <span>Ocultar atividades concluídas</span>
-        </label>
-        <button class="btn-whatsapp" onclick="exportToWhatsApp()">📋 Copiar p/ WhatsApp</button>
-    </div>
-
-    <div class="form-group admin-only" id="global-form-box">
-        <div class="form-row">
-            <input type="text" id="todo-input" placeholder="Nova atividade...">
-            <input type="text" id="group-input" placeholder="Grupo (Ex: Trabalho, Casa...)">
-            <button onclick="createTodoGlobal()">Adicionar</button>
+    <div class="view-dashboard">
+        <div class="card admin-only form-group">
+            <div class="form-row" style="width: 100%;">
+                <input type="text" id="new-list-input" placeholder="Nome da nova lista de tarefas...">
+                <button onclick="createNewList()">Criar Lista</button>
+            </div>
         </div>
+        
+        <div class="lists-grid" id="lists-container"></div>
     </div>
 
-    <div id="todo-groups"></div>
+    <div class="view-todos">
+        <div class="card controls-card">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" id="hide-completed-checkbox" onchange="toggleHideCompletedFilter()" style="width: auto;">
+                <span>Ocultar atividades concluídas</span>
+            </label>
+            <button class="btn-whatsapp" onclick="exportToWhatsApp()">📋 Copiar p/ WhatsApp</button>
+        </div>
+
+        <div class="card admin-only form-group">
+            <div class="form-row" style="width: 100%;">
+                <input type="text" id="todo-input" placeholder="Nova atividade...">
+                <input type="text" id="group-input" placeholder="Grupo (Ex: Trabalho, Casa...)">
+                <button onclick="createTodoGlobal()">Adicionar</button>
+            </div>
+        </div>
+
+        <div id="todo-groups"></div>
+    </div>
 </div>
 
 <script type="module">
@@ -347,14 +174,16 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const todosRef = ref(db, 'todos');
 
+    // Controle de Parâmetros e Rotas
     const urlParams = new URLSearchParams(window.location.search);
+    const currentListId = urlParams.get('list');
     const isAdmin = urlParams.get('mode') === 'admin';
 
-    // Armazenamento local do último snapshot do banco para uso no botão do WhatsApp
     let currentTodosSnapshot = {};
+    let hideCompleted = false;
 
+    // Configuração de Visualização Inicial e Segurança Básica
     if (isAdmin) {
         document.body.classList.add('mode-admin');
         document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Liberada)</span>`;
@@ -362,16 +191,96 @@
         document.getElementById('view-mode-badge').innerHTML = `<span style="color: #e57373;">👁️ Modo Leitor (Apenas Conclusão de Atividades)</span>`;
     }
 
-    let hideCompleted = false;
+    if (currentListId) {
+        document.body.classList.add('screen-todos');
+        // Escuta mudanças específicas da lista ativa
+        onValue(ref(db, `listas/${currentListId}/todos`), (snapshot) => {
+            currentTodosSnapshot = snapshot.val() || {};
+            renderTodoList(currentTodosSnapshot);
+        });
+        // Busca o título da lista
+        onValue(ref(db, `listas/${currentListId}/name`), (snapshot) => {
+            document.getElementById('app-title').innerText = snapshot.val() || "Lista de Atividades";
+        });
+    } else {
+        document.body.classList.add('screen-dashboard');
+        document.getElementById('app-title').innerText = "🗂️ Gerenciador de Listas";
+        // Escuta todas as listas cadastradas
+        onValue(ref(db, 'listas'), (snapshot) => {
+            renderDashboard(snapshot.val() || {});
+        });
+    }
 
+    // ================= FUNÇÕES DO DASHBOARD (TELA 1) =================
+    window.createNewList = function() {
+        if (!isAdmin) return;
+        const input = document.getElementById('new-list-input');
+        const name = input.value.trim();
+        if (!name) return alert("Digite um nome para a lista!");
+
+        const newGroupRef = push(ref(db, 'listas'));
+        set(newGroupRef, { name: name, todos: {} });
+        input.value = '';
+    }
+
+    window.renameList = function(listId, currentName) {
+        if (!isAdmin) return;
+        const newName = prompt("Digite o novo nome da lista:", currentName);
+        if (newName && newName.trim() !== "") {
+            update(ref(db, `listas/${listId}`), { name: newName.trim() });
+        }
+    }
+
+    window.deleteList = function(listId, name) {
+        if (!isAdmin) return;
+        if (confirm(`⚠️ ATENÇÃO!! Você realmente deseja apagar a lista "${name}"? Isso removerá permanentemente todos os grupos e subatividades dela.`)) {
+            remove(ref(db, `listas/${listId}`));
+        }
+    }
+
+    window.openList = function(listId) {
+        const modeParam = isAdmin ? '&mode=admin' : '';
+        window.location.search = `?list=${listId}${modeParam}`;
+    }
+
+    window.goBackToDashboard = function(e) {
+        e.preventDefault();
+        const modeParam = isAdmin ? '?mode=admin' : '';
+        window.location.search = modeParam;
+    }
+
+    function renderDashboard(listasObj) {
+        const container = document.getElementById('lists-container');
+        container.innerHTML = '';
+
+        if (Object.keys(listasObj).length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:#999; padding:20px;">Nenhuma lista criada ainda.</p>`;
+            return;
+        }
+
+        for (let id in listasObj) {
+            const lista = listasObj[id];
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'list-item-card';
+
+            itemDiv.innerHTML = `
+                <div class="list-info">📋 ${lista.name}</div>
+                <div class="list-actions">
+                    <button onclick="openList('${id}')">Acessar</button>
+                    <button class="btn-edit admin-only" onclick="renameList('${id}', '${lista.name.replace(/'/g, "\\'")}')">Renomear</button>
+                    <button class="btn-delete-small admin-only" onclick="deleteList('${id}', '${lista.name.replace(/'/g, "\\'")}')">Excluir</button>
+                </div>
+            `;
+            container.appendChild(itemDiv);
+        }
+    }
+
+    // ================= FUNÇÕES DO TODO (TELA 2) =================
     window.toggleHideCompletedFilter = function() {
         hideCompleted = document.getElementById('hide-completed-checkbox').checked;
         const container = document.getElementById('todo-groups');
-        if (hideCompleted) {
-            container.classList.add('hide-completed');
-        } else {
-            container.classList.remove('hide-completed');
-        }
+        if (hideCompleted) container.classList.add('hide-completed');
+        else container.classList.remove('hide-completed');
     }
 
     window.createTodoGlobal = function() {
@@ -382,19 +291,8 @@
         const group = groupInput.value.trim() || "Geral";
 
         if (!text) return alert("Digite o nome da atividade!");
-
         saveTodo(text, group);
         textInput.value = '';
-    }
-
-    function saveTodo(text, groupName) {
-        const newTodoRef = push(todosRef);
-        set(newTodoRef, {
-            text: text,
-            group: groupName,
-            completed: false,
-            subtasks: {}
-        });
     }
 
     window.createTodoInGroup = function(groupName) {
@@ -403,29 +301,32 @@
         const text = input.value.trim();
 
         if (!text) return alert("Digite o nome da atividade!");
-
         saveTodo(text, groupName);
         input.value = '';
     }
 
+    function saveTodo(text, groupName) {
+        const listTodosRef = ref(db, `listas/${currentListId}/todos`);
+        const newTodoRef = push(listTodosRef);
+        set(newTodoRef, { text: text, group: groupName, completed: false, subtasks: {} });
+    }
+
     window.toggleTodo = function(id, currentStatus) {
-        update(ref(db, `todos/${id}`), {
-            completed: !currentStatus
-        });
+        update(ref(db, `listas/${currentListId}/todos/${id}`), { completed: !currentStatus });
     }
 
     window.deleteTodo = function(id) {
         if (!isAdmin) return;
-        if (confirm("Tem certeza que deseja remover esta atividade e todas as suas subatividades?")) {
-            remove(ref(db, `todos/${id}`));
+        if (confirm("Deseja remover esta atividade?")) {
+            remove(ref(db, `listas/${currentListId}/todos/${id}`));
         }
     }
 
     window.deleteGroup = function(groupName, todoIdsArray) {
         if (!isAdmin) return;
-        if (confirm(`Tem certeza que deseja deletar o grupo "${groupName}" e todas as suas ${todoIdsArray.length} atividades?`)) {
+        if (confirm(`Deletar o grupo "${groupName}" e todas as suas ${todoIdsArray.length} atividades?`)) {
             todoIdsArray.forEach(id => {
-                remove(ref(db, `todos/${id}`));
+                remove(ref(db, `listas/${currentListId}/todos/${id}`));
             });
         }
     }
@@ -434,44 +335,27 @@
         if (!isAdmin) return;
         const input = document.getElementById(`sub-input-${todoId}`);
         const text = input.value.trim();
-
         if (!text) return alert("Digite o nome da subatividade!");
 
-        const subtasksRef = ref(db, `todos/${todoId}/subtasks`);
-        const newSubtaskRef = push(subtasksRef);
-        
-        set(newSubtaskRef, {
-            text: text,
-            completed: false
-        });
-
+        const subtasksRef = ref(db, `listas/${currentListId}/todos/${todoId}/subtasks`);
+        set(push(subtasksRef), { text: text, completed: false });
         input.value = '';
     }
 
     window.toggleSubtaskContext = function(todoId, subtaskId, currentStatus) {
-        update(ref(db, `todos/${todoId}/subtasks/${subtaskId}`), {
-            completed: !currentStatus
-        });
+        update(ref(db, `listas/${currentListId}/todos/${todoId}/subtasks/${subtaskId}`), { completed: !currentStatus });
     }
 
     window.deleteSubtask = function(todoId, subtaskId) {
         if (!isAdmin) return;
-        if (confirm("Deseja remover esta subatividade?")) {
-            remove(ref(db, `todos/${todoId}/subtasks/${subtaskId}`));
+        if (confirm("Remover subatividade?")) {
+            remove(ref(db, `listas/${currentListId}/todos/${todoId}/subtasks/${subtaskId}`));
         }
     }
 
-    function cssSafeName(name) {
-        return btoa(unescape(encodeURIComponent(name))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    }
-
-    // Função para Copiar e Formatar a Lista para o WhatsApp
     window.exportToWhatsApp = function() {
-        if (!currentTodosSnapshot || Object.keys(currentTodosSnapshot).length === 0) {
-            return alert("A lista está vazia!");
-        }
+        if (!currentTodosSnapshot || Object.keys(currentTodosSnapshot).length === 0) return alert("Lista vazia!");
 
-        // Agrupar itens localmente
         const grouped = {};
         for (let id in currentTodosSnapshot) {
             const todo = currentTodosSnapshot[id];
@@ -479,7 +363,7 @@
             grouped[todo.group].push(todo);
         }
 
-        let textMessage = "📋 *NOSSA LISTA DE ATIVIDADES*\n\n";
+        let textMessage = `📋 *${document.getElementById('app-title').innerText.toUpperCase()}*\n\n`;
         let totalItemsAdded = 0;
 
         for (let groupName in grouped) {
@@ -487,23 +371,16 @@
             let itemsInGroupAdded = 0;
 
             grouped[groupName].forEach(todo => {
-                // Se o filtro ocultar estiver ativo e a tarefa principal estiver concluída, ignora
                 if (hideCompleted && todo.completed) return;
-
                 let marker = todo.completed ? "✅ " : "🔲 ";
-                let todoTextFormatted = todo.completed ? `~${todo.text}~` : todo.text;
-                groupText += `  ${marker}${todoTextFormatted}\n`;
+                groupText += `  ${marker}${todo.completed ? `~${todo.text}~` : todo.text}\n`;
                 itemsInGroupAdded++;
 
-                // Subatividades
                 if (todo.subtasks) {
                     for (let subId in todo.subtasks) {
                         const sub = todo.subtasks[subId];
                         if (hideCompleted && sub.completed) continue;
-
-                        let subMarker = sub.completed ? "🔹 ✅ " : "🔹 🔲 ";
-                        let subTextFormatted = sub.completed ? `~${sub.text}~` : sub.text;
-                        groupText += `      ${subMarker}${subTextFormatted}\n`;
+                        groupText += `      ${sub.completed ? "🔹 ✅ " : "🔹 🔲 "}${sub.completed ? `~${sub.text}~` : sub.text}\n`;
                     }
                 }
             });
@@ -514,55 +391,36 @@
             }
         }
 
-        if (totalItemsAdded === 0) {
-            return alert("Todas as tarefas estão concluídas e o filtro ocultar está ativo!");
-        }
-
-        // Copia o texto final para a área de transferência
-        navigator.clipboard.writeText(textMessage.trim())
-            .then(() => {
-                alert("Lista copiada com sucesso! Basta colar no seu WhatsApp. 😉");
-            })
-            .catch(err => {
-                alert("Erro ao copiar lista: " + err);
-            });
+        navigator.clipboard.writeText(textMessage.trim()).then(() => alert("Lista copiada!")).catch(err => alert("Erro: " + err));
     }
 
-    onValue(todosRef, (snapshot) => {
-        const data = snapshot.val() || {};
-        currentTodosSnapshot = data; // Salva o estado atual
-        renderTodoList(data);
-    });
+    function cssSafeName(name) {
+        return btoa(unescape(encodeURIComponent(name))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    }
 
     function renderTodoList(todos) {
         const groupsContainer = document.getElementById('todo-groups');
         groupsContainer.innerHTML = '';
 
-        if (hideCompleted) {
-            groupsContainer.classList.add('hide-completed');
-        }
+        if (hideCompleted) groupsContainer.classList.add('hide-completed');
 
         const groupedTodos = {};
         for (let id in todos) {
             const todo = todos[id];
-            if (!groupedTodos[todo.group]) {
-                groupedTodos[todo.group] = [];
-            }
+            if (!groupedTodos[todo.group]) groupedTodos[todo.group] = [];
             groupedTodos[todo.group].push({ id, ...todo });
         }
 
         for (let groupName in groupedTodos) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
-            
             const todoIdsInGroup = groupedTodos[groupName].map(t => t.id);
-            const todoIdsJson = JSON.stringify(todoIdsInGroup).replace(/"/g, "'");
             const safeGroupName = cssSafeName(groupName);
             
-            let groupHeaderHtml = `
+            groupDiv.innerHTML = `
                 <div class="group-header">
                     <div class="group-title">${groupName}</div>
-                    <button class="btn-delete-small admin-only" onclick="deleteGroup('${groupName.replace(/'/g, "\\'")}', ${todoIdsJson})">Excluir Grupo</button>
+                    <button class="btn-delete-small admin-only" onclick="deleteGroup('${groupName.replace(/'/g, "\\'")}', ${JSON.stringify(todoIdsInGroup).replace(/"/g, "'")})">Excluir Grupo</button>
                 </div>
                 <div class="group-quick-form admin-only">
                     <input type="text" id="group-todo-input-${safeGroupName}" placeholder="Adicionar atividade em ${groupName}...">
@@ -570,7 +428,6 @@
                 </div>
             `;
             
-            groupDiv.innerHTML = groupHeaderHtml;
             const ul = document.createElement('ul');
             ul.className = 'todo-list';
 
@@ -578,25 +435,15 @@
                 const li = document.createElement('li');
                 li.className = `todo-item ${todo.completed ? 'is-completed' : ''}`;
 
-                let mainTodoHtml = `
-                    <div class="todo-main">
-                        <div class="todo-left">
-                            <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo('${todo.id}', ${todo.completed})" style="width: auto;">
-                            <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
-                        </div>
-                        <button class="btn-delete-small admin-only" onclick="deleteTodo('${todo.id}')" style="margin-left: 10px;">✕</button>
-                    </div>
-                `;
-
                 let subtasksHtml = `<div class="subtasks-container">`;
                 if (todo.subtasks) {
                     for (let subId in todo.subtasks) {
-                        const subtask = todo.subtasks[subId];
+                        const sub = todo.subtasks[subId];
                         subtasksHtml += `
-                            <div class="subtask-item ${subtask.completed ? 'is-completed' : ''}">
+                            <div class="subtask-item ${sub.completed ? 'is-completed' : ''}">
                                 <div class="subtask-left">
-                                    <input type="checkbox" ${subtask.completed ? 'checked' : ''} onchange="toggleSubtaskContext('${todo.id}', '${subId}', ${subtask.completed})" style="width: auto;">
-                                    <span class="${subtask.completed ? 'completed' : ''}">${subtask.text}</span>
+                                    <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleSubtaskContext('${todo.id}', '${subId}', ${sub.completed})" style="width: auto;">
+                                    <span class="${sub.completed ? 'completed' : ''}">${sub.text}</span>
                                 </div>
                                 <button class="btn-delete-small admin-only" onclick="deleteSubtask('${todo.id}', '${subId}')" style="padding: 1px 5px; font-size: 10px;">✕</button>
                             </div>
@@ -611,7 +458,15 @@
                     </div>
                 </div>`;
 
-                li.innerHTML = mainTodoHtml + subtasksHtml;
+                li.innerHTML = `
+                    <div class="todo-main">
+                        <div class="todo-left">
+                            <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo('${todo.id}', ${todo.completed})" style="width: auto;">
+                            <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
+                        </div>
+                        <button class="btn-delete-small admin-only" onclick="deleteTodo('${todo.id}')" style="margin-left: 10px;">✕</button>
+                    </div>
+                ` + subtasksHtml;
                 ul.appendChild(li);
             });
 

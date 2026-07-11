@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List</title>
+    <title>Todo List Colaborativo (WhatsApp Export)</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -13,6 +13,8 @@
             --accent-color: #8e99f3;
             --danger-color: #e57373;
             --danger-hover: #ef5350;
+            --whatsapp-color: #25d366;
+            --whatsapp-hover: #20ba56;
         }
 
         * {
@@ -126,6 +128,14 @@
             background-color: var(--accent-color);
         }
 
+        button.btn-whatsapp {
+            background-color: var(--whatsapp-color);
+        }
+
+        button.btn-whatsapp:hover {
+            background-color: var(--whatsapp-hover);
+        }
+
         /* Estrutura de Grupos */
         .group-container {
             background: var(--card-bg);
@@ -166,7 +176,7 @@
             color: white;
         }
 
-        /* Formulário de atividade rápido dentro do grupo */
+        /* Formulário rápido interno do grupo */
         .group-quick-form {
             display: flex;
             gap: 8px;
@@ -280,7 +290,6 @@
             width: auto;
         }
 
-        /* Classes de visibilidade condicional baseadas no modo */
         .admin-only {
             display: none !important;
         }
@@ -292,7 +301,6 @@
             display: inline-block !important;
         }
 
-        /* Esconder elementos concluídos quando filtro estiver ativo */
         .hide-completed .todo-item.is-completed,
         .hide-completed .subtask-item.is-completed {
             display: none !important;
@@ -308,8 +316,9 @@
     <div class="controls-card">
         <label class="filter-group">
             <input type="checkbox" id="hide-completed-checkbox" onchange="toggleHideCompletedFilter()" style="width: auto;">
-            <span>Ocultar atividades/subatividades concluídas</span>
+            <span>Ocultar atividades concluídas</span>
         </label>
+        <button class="btn-whatsapp" onclick="exportToWhatsApp()">📋 Copiar p/ WhatsApp</button>
     </div>
 
     <div class="form-group admin-only" id="global-form-box">
@@ -340,13 +349,15 @@
     const db = getDatabase(app);
     const todosRef = ref(db, 'todos');
 
-    // Validação de modo de acesso via parâmetro da URL (?mode=admin)
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('mode') === 'admin';
 
+    // Armazenamento local do último snapshot do banco para uso no botão do WhatsApp
+    let currentTodosSnapshot = {};
+
     if (isAdmin) {
         document.body.classList.add('mode-admin');
-        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Habilitada)</span>`;
+        document.getElementById('view-mode-badge').innerHTML = `<span style="color: #43a047;">🛠️ Modo Administrador (Edição Liberada)</span>`;
     } else {
         document.getElementById('view-mode-badge').innerHTML = `<span style="color: #e57373;">👁️ Modo Leitor (Apenas Conclusão de Atividades)</span>`;
     }
@@ -437,13 +448,6 @@
         input.value = '';
     }
 
-    window.toggleSubtask = function(todoId, subtaskId, currentStatus) {
-        update(ref(db, `todos/${id}/subtasks/${subtaskId}`), { // Correção aqui de contexto de id se necessário, mapeado dinamicamente abaixo
-            completed: !currentStatus
-        });
-    }
-
-    // Vinculação global das ações de toggle no escopo global
     window.toggleSubtaskContext = function(todoId, subtaskId, currentStatus) {
         update(ref(db, `todos/${todoId}/subtasks/${subtaskId}`), {
             completed: !currentStatus
@@ -461,8 +465,72 @@
         return btoa(unescape(encodeURIComponent(name))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
     }
 
+    // Função para Copiar e Formatar a Lista para o WhatsApp
+    window.exportToWhatsApp = function() {
+        if (!currentTodosSnapshot || Object.keys(currentTodosSnapshot).length === 0) {
+            return alert("A lista está vazia!");
+        }
+
+        // Agrupar itens localmente
+        const grouped = {};
+        for (let id in currentTodosSnapshot) {
+            const todo = currentTodosSnapshot[id];
+            if (!grouped[todo.group]) grouped[todo.group] = [];
+            grouped[todo.group].push(todo);
+        }
+
+        let textMessage = "📋 *NOSSA LISTA DE ATIVIDADES*\n\n";
+        let totalItemsAdded = 0;
+
+        for (let groupName in grouped) {
+            let groupText = `*📁 ${groupName.toUpperCase()}*\n`;
+            let itemsInGroupAdded = 0;
+
+            grouped[groupName].forEach(todo => {
+                // Se o filtro ocultar estiver ativo e a tarefa principal estiver concluída, ignora
+                if (hideCompleted && todo.completed) return;
+
+                let marker = todo.completed ? "✅ " : "🔲 ";
+                let todoTextFormatted = todo.completed ? `~${todo.text}~` : todo.text;
+                groupText += `  ${marker}${todoTextFormatted}\n`;
+                itemsInGroupAdded++;
+
+                // Subatividades
+                if (todo.subtasks) {
+                    for (let subId in todo.subtasks) {
+                        const sub = todo.subtasks[subId];
+                        if (hideCompleted && sub.completed) continue;
+
+                        let subMarker = sub.completed ? "🔹 ✅ " : "🔹 🔲 ";
+                        let subTextFormatted = sub.completed ? `~${sub.text}~` : sub.text;
+                        groupText += `      ${subMarker}${subTextFormatted}\n`;
+                    }
+                }
+            });
+
+            if (itemsInGroupAdded > 0) {
+                textMessage += groupText + "\n";
+                totalItemsAdded += itemsInGroupAdded;
+            }
+        }
+
+        if (totalItemsAdded === 0) {
+            return alert("Todas as tarefas estão concluídas e o filtro ocultar está ativo!");
+        }
+
+        // Copia o texto final para a área de transferência
+        navigator.clipboard.writeText(textMessage.trim())
+            .then(() => {
+                alert("Lista copiada com sucesso! Basta colar no seu WhatsApp. 😉");
+            })
+            .catch(err => {
+                alert("Erro ao copiar lista: " + err);
+            });
+    }
+
     onValue(todosRef, (snapshot) => {
         const data = snapshot.val() || {};
+        currentTodosSnapshot = data; // Salva o estado atual
         renderTodoList(data);
     });
 
